@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
+import Button from "../../components/ui/Button";
 import { listarPedidosDeUsuario } from "../../services/pedidosService";
 
 const ESTADO_COLORS = {
@@ -21,6 +22,7 @@ const ESTADO_LABELS = {
 export default function HistorialPedidosPage() {
   const { user, loading } = useAuth();
   const [pedidos, setPedidos] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (loading || !user) return;
@@ -68,6 +70,14 @@ export default function HistorialPedidosPage() {
                   <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
                     <p className="text-sm text-slate-500">{pedido.direccion_envio}</p>
                     <p className="font-semibold text-brand-800">S/ {Number(pedido.total).toFixed(2)}</p>
+                  </div>
+                  <div className="justify-end mt-4 flex">
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate(`/pedido-detalle/${pedido.id}`)}
+                    >
+                    Ver detalle
+                  </Button>
                   </div>
                 </div>
               ))}

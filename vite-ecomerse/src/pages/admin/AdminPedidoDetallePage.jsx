@@ -4,6 +4,7 @@ import { obtenerPedido, actualizarEstadoPedido } from "../../services/pedidosSer
 import { obtenerProducto } from "../../services/productosService";
 import { obtenerUsuario, eliminarPedido } from "../../services/adminService";
 import Button from "../../components/ui/Button";
+import insforge from "../../services/insforgeClient";
 
 const ESTADOS = ["pendiente", "en_transito", "entregado", "cancelado"];
 
@@ -32,15 +33,18 @@ export default function AdminPedidoDetallePage() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function cargar() {
       try {
         const ped = await obtenerPedido(id);
+        if (cancelled) return;
         setPedido(ped);
         setNuevoEstado(ped.estado);
 
         if (ped.usuario_id) {
           const u = await obtenerUsuario(ped.usuario_id);
-          setUsuario(u);
+          if (!cancelled) setUsuario(u);
         }
 
         if (ped.order_items) {
@@ -53,16 +57,48 @@ export default function AdminPedidoDetallePage() {
               items.push({ ...item, producto: null });
             }
           }
-          setItemsConProducto(items);
+          if (!cancelled) setItemsConProducto(items);
         }
       } catch {
-        setPedido(null);
+        if (!cancelled) setPedido(null);
       } finally {
-        setCargando(false);
+        if (!cancelled) setCargando(false);
       }
     }
     cargar();
+
+    return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    if (cargando || !pedido) return;
+
+    let unsubscribed = false;
+
+    async function subscribe() {
+      try {
+        await insforge.realtime.connect();
+        const response = await insforge.realtime.subscribe(`order:${id}`);
+        if (!response.ok || unsubscribed) return;
+
+        insforge.realtime.on("status_changed", (payload) => {
+          if (payload.id === id) {
+            setPedido((prev) => prev ? { ...prev, estado: payload.estado } : prev);
+            setNuevoEstado(payload.estado);
+          }
+        });
+      } catch {
+        // realtime not available, continue without it
+      }
+    }
+
+    subscribe();
+
+    return () => {
+      unsubscribed = true;
+      insforge.realtime.unsubscribe(`order:${id}`);
+    };
+  }, [id, cargando, pedido]);
 
   const handleActualizarEstado = async () => {
     if (nuevoEstado === pedido.estado) return;

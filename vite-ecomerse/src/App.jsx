@@ -24,6 +24,7 @@ import AdminCategoriasPage from "./pages/admin/AdminCategoriasPage";
 import AdminPedidosPage from "./pages/admin/AdminPedidosPage";
 import AdminPedidoDetallePage from "./pages/admin/AdminPedidoDetallePage";
 import AdminUsuariosPage from "./pages/admin/AdminUsuariosPage";
+import PedidoDetalleClientePage from "./pages/perfil/PedidoDetalleClientePage";
 
 export default function App() {
   return (
@@ -40,9 +41,10 @@ export default function App() {
         <Route path="/editar-perfil" element={<ProtectedRoute><EditarPerfilPage /></ProtectedRoute>} />
         <Route path="/cambiar-password" element={<ProtectedRoute><CambiarPasswordPage /></ProtectedRoute>} />
         <Route path="/historial-pedidos" element={<ProtectedRoute><HistorialPedidosPage /></ProtectedRoute>} />
-        <Route path="/carrito" element={<CarritoPage />} />
+        <Route path="/carrito" element={<ProtectedRoute><CarritoPage /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/pedido/confirmacion" element={<ProtectedRoute><ConfirmacionPedidoPage /></ProtectedRoute>} />
+        <Route path="/pedido-detalle/:id" element={<ProtectedRoute><PedidoDetalleClientePage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 

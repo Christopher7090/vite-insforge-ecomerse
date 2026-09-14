@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { obtenerProducto, getImageUrl } from "../../services/productosService";
 import { listarCategorias } from "../../services/categoriasService";
 import { agregarAlCarrito } from "../../services/carritoService";
 
 export default function ProductoDetallePage() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [producto, setProducto] = useState(null);
   const [categorias, setCategorias] = useState([]);
@@ -57,8 +58,7 @@ export default function ProductoDetallePage() {
 
   const handleAgregar = async () => {
     await agregarAlCarrito(producto.id, cantidad);
-    setAgregado(true);
-    setTimeout(() => setAgregado(false), 1500);
+    navigate("/carrito");
   };
 
   return (
@@ -95,7 +95,7 @@ export default function ProductoDetallePage() {
           )}
 
           <button onClick={handleAgregar} disabled={producto.stock === 0} className="btn-primary mt-6 w-full">
-            {agregado ? "✓ Agregado al carrito" : "Agregar al carrito"}
+            Agregar al carrito
           </button>
         </div>
       </div>

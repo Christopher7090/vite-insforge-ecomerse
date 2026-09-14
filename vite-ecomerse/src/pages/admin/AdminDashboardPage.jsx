@@ -67,10 +67,10 @@ export default function AdminDashboardPage() {
                 <Link key={p.id} to={`/admin/pedidos/${p.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50">
                   <div>
                     <span className="font-medium text-slate-800">#{p.id}</span>
-                    <span className="ml-2 text-sm text-slate-500">{p.fecha}</span>
+                    <span className="ml-2 text-sm text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-slate-700">S/ {Number(p.total).toFixed(2)}</span>
+                    <span className="text-sm font-medium text-slate-700">S/{Number(p.total).toFixed(2)}</span>
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ESTADO_COLORS[p.estado] || ""}`}>
                       {ESTADO_LABELS[p.estado] || p.estado}
                     </span>

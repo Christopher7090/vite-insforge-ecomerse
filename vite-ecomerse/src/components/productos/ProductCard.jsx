@@ -6,12 +6,6 @@ import { getImageUrl } from "../../services/productosService";
 export default function ProductCard({ producto, categoriaNombre }) {
   const [agregado, setAgregado] = useState(false);
 
-  const handleAgregar = async () => {
-    await agregarAlCarrito(producto.id, 1);
-    setAgregado(true);
-    setTimeout(() => setAgregado(false), 1500);
-  };
-
   const imagenUrl = getImageUrl(producto.imagenes?.[0]);
 
   return (
@@ -32,21 +26,11 @@ export default function ProductCard({ producto, categoriaNombre }) {
           <p className="mt-auto pt-2 text-lg font-semibold text-brand-800">
             S/ {Number(producto.precio).toFixed(2)}
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs pb-5 text-slate-400">
             {producto.stock > 0 ? `${producto.stock} disponibles` : "Sin stock"}
           </p>
         </div>
       </Link>
-
-      <div className="p-4 pt-3">
-        <button
-          onClick={handleAgregar}
-          disabled={producto.stock === 0}
-          className="btn-secondary w-full text-xs"
-        >
-          {agregado ? "✓ Agregado" : "Agregar al carrito"}
-        </button>
-      </div>
     </div>
   );
 }

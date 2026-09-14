@@ -77,10 +77,3 @@ export const subirImagen = async (file, productoId) => {
   if (error) throw error;
   return data?.key || path;
 };
-
-export const getPublicImageUrl = (key) => {
-  if (!key) return null;
-  if (key.startsWith("http")) return key;
-  const base = import.meta.env.VITE_INSFORGE_URL;
-  return `${base}/api/storage/buckets/${BUCKET}/objects/${encodeURIComponent(key)}`;
-};

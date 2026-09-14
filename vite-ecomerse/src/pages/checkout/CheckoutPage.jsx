@@ -6,6 +6,7 @@ import { obtenerCarrito, vaciarCarrito } from "../../services/carritoService";
 import { obtenerProducto } from "../../services/productosService";
 import { crearPedido } from "../../services/pedidosService";
 import { useAuth } from "../../contexts/AuthContext";
+import insforge from "../../services/insforgeClient";
 
 const METODOS_PAGO = [
   "Tarjeta de crédito",
@@ -87,8 +88,24 @@ export default function CheckoutPage() {
         direccionEnvio: form.direccion.trim(),
         metodoPago: form.metodoPago,
       });
-
+      console.log("Pedido creado:", pedido);
       await vaciarCarrito();
+
+      insforge.emails.send({
+        to: user.email,
+        subject: `Pedido #${pedido.id} confirmado`,
+        html: `
+          <h1>¡Gracias por tu compra!</h1>
+          <p>Tu pedido <strong>#${pedido.id}</strong> fue registrado correctamente.</p>
+          <p><strong>Dirección de envío:</strong> ${form.direccion.trim()}</p>
+          <p><strong>Método de pago:</strong> ${form.metodoPago}</p>
+          <hr/>
+          <p><strong>Productos:</strong></p>
+          <ul>${items.map((i) => `<li>${i.producto.nombre} x ${i.cantidad} — S/ ${(i.producto.precio * i.cantidad).toFixed(2)}</li>`).join("")}</ul>
+          <p><strong>Total: S/ ${total.toFixed(2)}</strong></p>
+        `,
+      }).catch(() => {});
+
       navigate("/pedido/confirmacion", { state: { pedidoId: pedido.id } });
     } catch (err) {
       setError(err.message || "Error al crear el pedido");

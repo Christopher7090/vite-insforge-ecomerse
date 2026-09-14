@@ -12,7 +12,7 @@ const adminHeaders = {
 export const obtenerEstadisticas = async () => {
   const [productos, pedidos, usuariosRes, productosBajoStock] = await Promise.all([
     insforge.database.from("products").select("id", { count: "exact", head: true }),
-    insforge.database.from("orders").select("*"),
+    insforge.database.from("orders").select("id, estado, total, fecha, created_at"),
     fetch(`${INSFORGE_URL}/api/auth/users?limit=1`, { headers: adminHeaders }).then((r) => r.json()),
     insforge.database.from("products").select("id, nombre, stock").lte("stock", 5).order("stock"),
   ]);
