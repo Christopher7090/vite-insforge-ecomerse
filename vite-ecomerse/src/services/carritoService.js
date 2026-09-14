@@ -1,4 +1,5 @@
 import insforge from "./insforgeClient";
+import {usuarioActual} from "./authService";
 
 export const obtenerCarrito = async () => {
   const { data, error } = await insforge.database
@@ -10,12 +11,13 @@ export const obtenerCarrito = async () => {
 };
 
 export const agregarAlCarrito = async (productoId, cantidad = 1) => {
+  const usuario = await usuarioActual().then(user => user.id);
   const { data: existing } = await insforge.database
     .from("cart_items")
-    .select("*")
+    .select()
     .eq("producto_id", productoId)
+    .eq("usuario_id", usuario)
     .single();
-
   if (existing) {
     const { error } = await insforge.database
       .from("cart_items")
@@ -25,10 +27,10 @@ export const agregarAlCarrito = async (productoId, cantidad = 1) => {
   } else {
     const { error } = await insforge.database
       .from("cart_items")
-      .insert([{ producto_id: productoId, cantidad }]);
+      .insert({ producto_id: productoId, cantidad: cantidad, usuario_id: usuario });
     if (error) throw error;
   }
-
+   
   return obtenerCarrito();
 };
 

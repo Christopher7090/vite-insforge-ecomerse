@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
@@ -105,9 +105,10 @@ export default function Sidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    setMobileOpen(false);
+    startTransition(() => { setMobileOpen(false); });
   }, [location.pathname]);
 
   useEffect(() => {

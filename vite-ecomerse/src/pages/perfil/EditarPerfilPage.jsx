@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
 import Sidebar from "../../components/layout/Sidebar";
 
 export default function EditarPerfilPage() {
-  const navigate = useNavigate();
   const { user, profile, updateProfile, loading } = useAuth();
 
   const [form, setForm] = useState({
@@ -39,7 +38,7 @@ export default function EditarPerfilPage() {
 
     setCargando(true);
     const resultado = await updateProfile({
-      nombre: form.nombre.trim(),
+      name: form.nombre.trim(),
       telefono: form.telefono.trim(),
       direccion: form.direccion.trim(),
     });
@@ -51,7 +50,7 @@ export default function EditarPerfilPage() {
     }
 
     setMensaje("Perfil actualizado correctamente");
-    setTimeout(() => navigate("/perfil"), 2000);
+    setTimeout(() => setMensaje(""), 2000);
   };
 
   if (loading) {

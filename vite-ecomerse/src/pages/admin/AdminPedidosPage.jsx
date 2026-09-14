@@ -76,7 +76,7 @@ export default function AdminPedidosPage() {
                 {filtrados.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium text-slate-800">#{p.id}</td>
-                    <td className="px-4 py-3 text-slate-600">{p.fecha}</td>
+                    <td className="px-4 py-3 text-slate-600">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-slate-600">S/ {Number(p.total).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${ESTADO_COLORS[p.estado] || "bg-slate-50 text-slate-600"}`}>
