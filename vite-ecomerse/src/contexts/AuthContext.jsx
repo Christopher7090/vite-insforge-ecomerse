@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import insforge from "../services/insforgeClient";
+import { syncGuestCart } from "../services/carritoService";
 
 const AuthContext = createContext(null);
 
@@ -62,6 +63,7 @@ export function AuthProvider({ children }) {
     if (error) return { ok: false, error: error.message };
     setUser(data.user);
     await fetchProfile(data.user.id);
+    await syncGuestCart(data.user.id);
     return { ok: true, user: data.user };
   };
 
@@ -79,6 +81,7 @@ export function AuthProvider({ children }) {
     if (data?.accessToken) {
       setUser(data.user);
       await fetchProfile(data.user.id);
+      await syncGuestCart(data.user.id);
     }
     return { ok: true, user: data.user };
   };
@@ -89,6 +92,7 @@ export function AuthProvider({ children }) {
     if (data?.user) {
       setUser(data.user);
       await fetchProfile(data.user.id);
+      await syncGuestCart(data.user.id);
     }
     return { ok: true, user: data.user };
   };

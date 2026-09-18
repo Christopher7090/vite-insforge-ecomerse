@@ -86,7 +86,7 @@ export default function CarritoPage() {
               const imagenUrl = getImageUrl(producto.imagenes?.[0]);
             return(
             <div key={id} className="card flex flex-wrap items-center gap-4 p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-[10px] text-brand-300">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-[10px] text-brand-300" onClick={() => navigate(`/producto/${producto.id}`)}>
                 {imagenUrl ? (
             <img src={imagenUrl} alt={producto.nombre} className="h-full w-full object-contain" />
           ) : (
@@ -94,7 +94,7 @@ export default function CarritoPage() {
           )}
               </div>
               <div className="min-w-[140px] flex-1">
-                <p className="font-medium text-slate-800">{producto.nombre}</p>
+                <p className="font-medium text-slate-800" onClick={() => navigate(`/producto/${producto.id}`)}>{producto.nombre}</p>
                 <p className="text-sm text-slate-500">S/ {Number(producto.precio).toFixed(2)} c/u</p>
               </div>
               <div className="flex items-center gap-2">

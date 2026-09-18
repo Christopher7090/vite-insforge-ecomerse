@@ -1,24 +1,30 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { obtenerCarrito } from "../../services/carritoService";
+import { obtenerCarrito, getGuestCartCount, onGuestCartUpdate } from "../../services/carritoService";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, profile, loading, isAuthenticated, isAdmin, logout } = useAuth();
-  const [cantidadCarrito, setCantidadCarrito] = useState(0);
+  const [cantidadCarrito, setCantidadCarrito] = useState(() => getGuestCartCount());
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const ctrl = { cancelled: false };
+    const ctrl = { cancelled: false };  
+    if (!isAuthenticated) {
+      const unsub = onGuestCartUpdate(() => {
+        if (!ctrl.cancelled) setCantidadCarrito(getGuestCartCount());
+      });
+      return () => { ctrl.cancelled = true; unsub(); };
+    }
+
     obtenerCarrito()
       .then((items) => {
         if (!ctrl.cancelled) setCantidadCarrito(items.reduce((acc, i) => acc + i.cantidad, 0));
       })
       .catch(() => {});
     return () => { ctrl.cancelled = true; };
-  }, [isAuthenticated]);
+  }, [isAuthenticated,navigate]);
 
   const handleDropdownToggle = () => setShowDropdown(!showDropdown);
 
