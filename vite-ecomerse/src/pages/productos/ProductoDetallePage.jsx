@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { obtenerProducto, getImageUrl } from "../../services/productosService";
 import { listarCategorias } from "../../services/categoriasService";
-import { agregarAlCarrito } from "../../services/carritoService";
+import { agregarAlCarrito,  obtenerCarritobyidproducto} from "../../services/carritoService";
 
 export default function ProductoDetallePage() {
   const navigate = useNavigate();
@@ -11,17 +11,19 @@ export default function ProductoDetallePage() {
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [cantidad, setCantidad] = useState(1);
-  const [agregado, setAgregado] = useState(false);
+  const [carrito, setCarrito] = useState({});
 
   useEffect(() => {
     async function cargar() {
       try {
-        const [prod, cats] = await Promise.all([
+        const [prod, cats, cart] = await Promise.all([
           obtenerProducto(id),
           listarCategorias(),
+          obtenerCarritobyidproducto(id).catch((error) => null),
         ]);
         setProducto(prod);
         setCategorias(cats);
+        setCarrito(cart);
       } catch {
         setProducto(null);
       } finally {
@@ -57,6 +59,10 @@ export default function ProductoDetallePage() {
   const disminuirCantidad = () => setCantidad((a) => Math.max(a - 1, 1));
 
   const handleAgregar = async () => {
+    if(cantidad + (carrito?.cantidad || 0) > producto.stock) {
+      alert("No hay suficiente stock disponible.");
+      return;
+    }
     await agregarAlCarrito(producto.id, cantidad);
     navigate("/carrito");
   };
@@ -89,7 +95,7 @@ export default function ProductoDetallePage() {
               <div className="mt-2 flex items-center gap-3">
                 <button onClick={disminuirCantidad} disabled={cantidad === 1} className="btn-secondary h-10 w-10">-</button>
                 <span className="min-w-8 text-center font-medium">{cantidad}</span>
-                <button onClick={aumentarCantidad} disabled={cantidad === producto.stock} className="btn-secondary h-10 w-10">+</button>
+                <button onClick={aumentarCantidad} disabled={cantidad === producto.stock || (cantidad+carrito?.cantidad) >= producto.stock} className="btn-secondary h-10 w-10">+</button>
               </div>
             </div>
           )}
