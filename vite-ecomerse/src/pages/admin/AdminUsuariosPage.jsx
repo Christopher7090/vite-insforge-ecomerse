@@ -8,12 +8,14 @@ export default function AdminUsuariosPage() {
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
-    listarUsuarios()
+      listar();
+  }, []);
+  const listar = () => {
+     listarUsuarios()
       .then(setUsuarios)
       .catch(() => {})
       .finally(() => setCargando(false));
-  }, []);
-
+    };
   const filtrados = usuarios.filter((u) => {
     if (!busqueda) return true;
     const q = busqueda.toLowerCase();
@@ -27,8 +29,8 @@ export default function AdminUsuariosPage() {
   const handleCambiarRol = async (userId, usuarioEmail, nuevoRol) => {
     if (!confirm(`¿Cambiar rol de "${usuarioEmail}" a "${nuevoRol}"?`)) return;
     try {
-      const updated = await cambiarRolUsuario(userId, nuevoRol);
-      setUsuarios((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+      await cambiarRolUsuario(userId, nuevoRol);
+      listar();
     } catch { /* ignore */ }
   };
 

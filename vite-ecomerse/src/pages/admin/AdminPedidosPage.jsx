@@ -25,7 +25,6 @@ export default function AdminPedidosPage( ) {
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
-    console.log("AdminPedidosPage usuario prop:", usuario);
     if (usuario) {
       listarPedidosDeUsuario(usuario)
         .then(setPedidos)
