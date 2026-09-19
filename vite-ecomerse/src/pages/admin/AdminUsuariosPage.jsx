@@ -8,12 +8,14 @@ export default function AdminUsuariosPage() {
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
-    listarUsuarios()
+      listar();
+  }, []);
+  const listar = () => {
+     listarUsuarios()
       .then(setUsuarios)
       .catch(() => {})
       .finally(() => setCargando(false));
-  }, []);
-
+    };
   const filtrados = usuarios.filter((u) => {
     if (!busqueda) return true;
     const q = busqueda.toLowerCase();
@@ -27,8 +29,8 @@ export default function AdminUsuariosPage() {
   const handleCambiarRol = async (userId, usuarioEmail, nuevoRol) => {
     if (!confirm(`¿Cambiar rol de "${usuarioEmail}" a "${nuevoRol}"?`)) return;
     try {
-      const updated = await cambiarRolUsuario(userId, nuevoRol);
-      setUsuarios((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+      await cambiarRolUsuario(userId, nuevoRol);
+      listar();
     } catch { /* ignore */ }
   };
 
@@ -87,7 +89,7 @@ export default function AdminUsuariosPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/admin/pedidos?usuario=${u.id}`} className="text-sm text-brand-600 hover:underline">Ver pedidos</Link>
+                        <Link to={`/admin/pedidos`} state={{ usuario: u.id }} className="text-sm text-brand-600 hover:underline">Ver pedidos</Link>
                       </td>
                       <td className="px-4 py-3 text-right">
                         {rol === "admin" ? (

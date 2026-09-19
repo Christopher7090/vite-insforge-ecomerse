@@ -60,16 +60,11 @@ export const obtenerUsuario = async (id) => {
 };
 
 export const cambiarRolUsuario = async (userId, nuevoRol) => {
-  const res = await fetch(`${INSFORGE_URL}/api/auth/profiles/${userId}`, {
-    method: "PATCH",
-    headers: adminHeaders,
-    body: JSON.stringify({ profile: { rol: nuevoRol } }),
+  const { error } = await insforge.database.rpc("set_user_role", {
+    p_user_id: userId,
+    p_new_rol: nuevoRol,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Error updating role: ${res.status}`);
-  }
-  return await res.json();
+  if (error) throw error;
 };
 
 export const eliminarPedido = async (id) => {
