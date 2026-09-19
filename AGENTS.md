@@ -158,7 +158,6 @@ This project uses [InsForge](https://insforge.dev): an all-in-one, open-source P
   - `insforge-cli`: backend and infrastructure via the `insforge` CLI (projects, SQL, migrations, RLS policies, storage buckets, functions, secrets, payment setup, schedules, deploys).
   - `insforge-debug`: diagnosing failures (SDK/HTTP errors, RLS denials, auth and OAuth issues) and running security or performance audits.
   - `insforge-integrations`: wiring external auth providers (Clerk, Auth0, WorkOS, Better Auth, etc.) for JWT-based RLS, or the OKX x402 payment facilitator.
-  - `insforge-rest-auth`: REST API auth endpoints for admin user management (list, get, update, delete users) when the SDK cannot perform the operation.
   - `find-skills`: discovering additional skills on demand.
 - **Credentials:** app code reads keys from `.env.local`; the CLI reads `.insforge/project.json`. Never hardcode or commit keys.
 
