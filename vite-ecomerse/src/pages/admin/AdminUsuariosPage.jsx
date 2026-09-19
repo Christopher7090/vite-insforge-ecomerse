@@ -87,7 +87,7 @@ export default function AdminUsuariosPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link to={`/admin/pedidos?usuario=${u.id}`} className="text-sm text-brand-600 hover:underline">Ver pedidos</Link>
+                        <Link to={`/admin/pedidos`} state={{ usuario: u.id }} className="text-sm text-brand-600 hover:underline">Ver pedidos</Link>
                       </td>
                       <td className="px-4 py-3 text-right">
                         {rol === "admin" ? (

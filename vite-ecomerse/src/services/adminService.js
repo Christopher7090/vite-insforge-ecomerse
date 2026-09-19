@@ -60,9 +60,9 @@ export const obtenerUsuario = async (id) => {
 };
 
 export const cambiarRolUsuario = async (userId, nuevoRol) => {
-  const res = await fetch(`${INSFORGE_URL}/api/auth/profiles/${userId}`, {
+  const res = await fetch(`${INSFORGE_URL}/api/auth/users/${userId}`, {
     method: "PATCH",
-    headers: adminHeaders,
+    headers: {Prefer: "return=representation", ...adminHeaders},
     body: JSON.stringify({ profile: { rol: nuevoRol } }),
   });
   if (!res.ok) {
