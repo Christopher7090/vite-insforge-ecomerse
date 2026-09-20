@@ -92,7 +92,9 @@ export default function AdminSidebar({ open, onClose }) {
           );
         })}
       </nav>
-
+          <Link to="/" className="flex items-center pl-5 gap-2 rounded-lg px-3 py-2 text-sm text-brand-200 hover:bg-brand-800 hover:text-white">
+            ⬅️ Go home
+          </Link>
       <div className="border-t border-brand-700 p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-700 text-sm font-semibold text-white">

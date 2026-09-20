@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
@@ -9,10 +9,9 @@ import { crearCheckoutSession } from "../../services/pagoService";
 import { useAuth } from "../../contexts/AuthContext";
 import insforge from "../../services/insforgeClient";
 
+
 const METODOS_PAGO = [
   { id: "stripe", label: "Tarjeta de crédito / débito (Stripe)" },
-  { id: "yape", label: "Yape / Plin" },
-  { id: "contraentrega", label: "Pago contra entrega" },
 ];
 
 export default function CheckoutPage() {
@@ -23,6 +22,7 @@ export default function CheckoutPage() {
   const [cargando, setCargando] = useState(true);
   const [form, setForm] = useState({ direccion: "", metodoPago: "stripe" });
   const [error, setError] = useState("");
+  const [errorpedido, setErrorPedido] = useState("");
   const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
@@ -60,8 +60,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return <Navigate to="/carrito" replace />;
-  }
-
+  } 
   const total = items.reduce((acc, i) => acc + i.producto.precio * i.cantidad, 0);
 
   const handleChange = (e) => {
@@ -96,6 +95,7 @@ export default function CheckoutPage() {
             productoId: i.producto.id,
             cantidad: i.cantidad,
             usuarioId: user.id,
+            stripe_price_id: i.producto.stripe_price_id,
           })),
           userEmail: user.email,
         });
@@ -127,15 +127,14 @@ export default function CheckoutPage() {
 
       navigate("/pedido/confirmacion", { state: { pedidoId: pedido.id } });
     } catch (err) {
-      setError(err.message || "Error al procesar el pedido");
+      setErrorPedido(err.message || "Error al procesar el pedido");
+      alert(errorpedido)
       setProcesando(false);
     }
   };
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <h1 className="text-2xl">Finalizar compra</h1>
-
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
         <form onSubmit={handleSubmit} className="card space-y-5 p-6" noValidate>
           <FormField

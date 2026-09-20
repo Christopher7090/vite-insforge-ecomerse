@@ -44,6 +44,30 @@ export const buscarProductos = async ({ texto, categoriaId, precioMax } = {}) =>
   return data || [];
 };
 
+const syncToStripe = async (producto) => {
+  try {
+    const { data, error } = await insforge.functions.invoke("create-stripe-product", {
+      body: {
+        product_id: producto.id,
+        name: producto.nombre,
+        price_cents: Math.round(producto.precio * 100),
+        description: producto.descripcion || undefined,
+      },
+    });
+    if (!error && data) {
+      await insforge.database
+        .from("products")
+        .update({
+          stripe_product_id: data.productId,
+          stripe_price_id: data.priceId,
+        })
+        .eq("id", producto.id);
+    }
+  } catch {
+    // Stripe sync is best-effort — product still works in DB
+  }
+};
+
 export const crearProducto = async (producto) => {
   const { data, error } = await insforge.database
     .from("products")
@@ -51,6 +75,7 @@ export const crearProducto = async (producto) => {
     .select()
     .single();
   if (error) throw error;
+  syncToStripe(data);
   return data;
 };
 
@@ -62,6 +87,9 @@ export const editarProducto = async (id, cambios) => {
     .select()
     .single();
   if (error) throw error;
+  if (cambios.precio !== undefined || cambios.nombre !== undefined) {
+    syncToStripe(data);
+  }
   return data;
 };
 
