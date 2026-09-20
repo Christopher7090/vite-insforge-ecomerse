@@ -186,7 +186,7 @@ export default function AdminPedidoDetallePage() {
               <option key={e} value={e}>{ESTADO_LABELS[e]}</option>
             ))}
           </select>
-          <Button onClick={handleActualizarEstado} disabled={guardando || nuevoEstado === pedido.estado}>
+          <Button onClick={handleActualizarEstado} disabled={guardando || nuevoEstado === pedido.estado || pedido.estado == "cancelado" || pedido.estado == "entregado"}>
             {guardando ? "..." : "Actualizar"}
           </Button>
         </div>

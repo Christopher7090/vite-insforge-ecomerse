@@ -68,6 +68,27 @@ export const cambiarRolUsuario = async (userId, nuevoRol) => {
 };
 
 export const eliminarPedido = async (id) => {
+    const { data: pedido, error: fetchError } = await insforge.database
+    .from("orders")
+    .select("estado")
+    .eq("id", id)
+    .single();
+  if (fetchError) throw fetchError;
+  if(pedido?.estado == "pendiente" || pedido?.estado == "en_transito"){
+    const { data: items } = await insforge.database
+      .from("order_items")
+      .select("producto_id, cantidad")
+      .eq("pedido_id", id);
+
+    if (items) {
+      for (const item of items) {
+        await insforge.database.rpc("increment_stock", {
+          p_producto_id: item.producto_id,
+          p_cantidad: item.cantidad,
+        });
+      }
+    }
+  }
   const { error: itemsErr } = await insforge.database
     .from("order_items")
     .delete()

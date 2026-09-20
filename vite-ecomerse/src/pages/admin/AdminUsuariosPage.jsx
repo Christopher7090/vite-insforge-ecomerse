@@ -7,15 +7,16 @@ export default function AdminUsuariosPage() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
-  useEffect(() => {
-      listar();
-  }, []);
   const listar = () => {
-     listarUsuarios()
+    listarUsuarios()
       .then(setUsuarios)
       .catch(() => {})
       .finally(() => setCargando(false));
-    };
+  };
+
+  useEffect(() => {
+    listar();
+  }, []);
   const filtrados = usuarios.filter((u) => {
     if (!busqueda) return true;
     const q = busqueda.toLowerCase();
