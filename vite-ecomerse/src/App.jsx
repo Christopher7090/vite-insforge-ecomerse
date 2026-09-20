@@ -20,6 +20,7 @@ import PagoExitoPage from "./pages/checkout/PagoExitoPage";
 import PagoCanceladoPage from "./pages/checkout/PagoCanceladoPage";
 import ProductoDetallePage from "./pages/productos/ProductoDetallePage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminProductosPage from "./pages/admin/AdminProductosPage";
 import AdminProductoFormPage from "./pages/admin/AdminProductoFormPage";
 import AdminCategoriasPage from "./pages/admin/AdminCategoriasPage";
@@ -54,6 +55,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute rolRequerido="admin"><AdminLayout /></ProtectedRoute>}>
         <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/admin/productos" element={<AdminProductosPage />} />
         <Route path="/admin/productos/nuevo" element={<AdminProductoFormPage />} />
         <Route path="/admin/productos/:id/editar" element={<AdminProductoFormPage />} />
