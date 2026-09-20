@@ -99,6 +99,29 @@ export const eliminarPedido = async (id) => {
   if (error) throw error;
 };
 
+export const obtenerAnaliticas = async () => {
+  const [pedidosRes, productosRes, categoriasRes, usuariosRes] = await Promise.all([
+    insforge.database
+      .from("orders")
+      .select("id, estado, total, fecha, created_at, order_items(producto_id, cantidad, precio_unitario)"),
+    insforge.database
+      .from("products")
+      .select("id, nombre, precio, categoria_id, categories(nombre)"),
+    insforge.database.from("categories").select("id, nombre"),
+    fetch(`${INSFORGE_URL}/api/auth/users?limit=1`, { headers: adminHeaders }).then((r) => r.json()),
+  ]);
+
+  if (pedidosRes.error) throw pedidosRes.error;
+  if (productosRes.error) throw productosRes.error;
+
+  return {
+    pedidos: pedidosRes.data || [],
+    productos: productosRes.data || [],
+    categorias: categoriasRes.data || [],
+    totalUsuarios: usuariosRes.pagination?.total ?? 0,
+  };
+};
+
 export const eliminarUsuarios = async (userIds) => {
   const res = await fetch(`${INSFORGE_URL}/api/auth/users`, {
     method: "DELETE",

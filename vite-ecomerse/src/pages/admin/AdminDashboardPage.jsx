@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { obtenerEstadisticas } from "../../services/adminService";
+import { obtenerEstadisticas, obtenerAnaliticas } from "../../services/adminService";
+import VentasTendenciaChart from "../../components/admin/charts/VentasTendenciaChart";
+import PedidosEstadoChart from "../../components/admin/charts/PedidosEstadoChart";
 
 const ESTADO_COLORS = {
   pendiente: "bg-amber-50 text-amber-700",
-  en_transito: "bg-blue-50 text-blue-700",
+  pagado: "bg-blue-50 text-blue-700",
+  en_transito: "bg-indigo-50 text-indigo-700",
   entregado: "bg-green-50 text-green-700",
   cancelado: "bg-red-50 text-red-700",
 };
 
 const ESTADO_LABELS = {
   pendiente: "Pendiente",
+  pagado: "Pagado",
   en_transito: "En tránsito",
   entregado: "Entregado",
   cancelado: "Cancelado",
@@ -18,12 +22,18 @@ const ESTADO_LABELS = {
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
+  const [chartData, setChartData] = useState(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    obtenerEstadisticas()
-      .then(setStats)
-      .catch(() => {})
+    Promise.all([
+      obtenerEstadisticas().catch(() => null),
+      obtenerAnaliticas().catch(() => null),
+    ])
+      .then(([s, a]) => {
+        setStats(s);
+        setChartData(a);
+      })
       .finally(() => setCargando(false));
   }, []);
 
@@ -41,8 +51,18 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-slate-800">Dashboard</h1>
-      <p className="mt-1 text-sm text-slate-500">Resumen general de la tienda</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-800">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">Resumen general de la tienda</p>
+        </div>
+        <Link
+          to="/admin/analytics"
+          className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Ver analytics →
+        </Link>
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((card) => (
@@ -55,6 +75,13 @@ export default function AdminDashboardPage() {
           </div>
         ))}
       </div>
+
+      {chartData && (
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <VentasTendenciaChart pedidos={chartData.pedidos} days={14} height={220} />
+          <PedidosEstadoChart pedidos={chartData.pedidos} height={220} />
+        </div>
+      )}
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {stats?.pedidosRecientes?.length > 0 && (
