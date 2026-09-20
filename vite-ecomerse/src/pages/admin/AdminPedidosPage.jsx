@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { listarPedidos } from "../../services/pedidosService";
+import { Link,useLocation } from "react-router-dom";
+import { listarPedidos, listarPedidosDeUsuario } from "../../services/pedidosService";
 
 const ESTADO_COLORS = {
   pendiente: "bg-amber-50 text-amber-700",
@@ -16,19 +16,27 @@ const ESTADO_LABELS = {
   cancelado: "Cancelado",
 };
 
-export default function AdminPedidosPage() {
+export default function AdminPedidosPage( ) {
+  const location = useLocation();
+  const usuario = location.state?.usuario || null;
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
-    listarPedidos()
-      .then(setPedidos)
-      .catch(() => {})
-      .finally(() => setCargando(false));
-  }, []);
-
+    if (usuario) {
+      listarPedidosDeUsuario(usuario)
+        .then(setPedidos)
+        .catch(() => {})
+        .finally(() => setCargando(false));
+    } else {
+      listarPedidos()
+        .then(setPedidos)
+        .catch(() => {})
+        .finally(() => setCargando(false));
+    }
+  }, [usuario]);
   const filtrados = pedidos.filter((p) => {
     const matchEstado = !filtroEstado || p.estado === filtroEstado;
     const matchBusqueda = !busqueda || p.id.toLowerCase().includes(busqueda.toLowerCase());

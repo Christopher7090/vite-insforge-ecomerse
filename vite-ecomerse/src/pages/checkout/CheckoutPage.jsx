@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
 import { obtenerCarrito, vaciarCarrito } from "../../services/carritoService";
 import { obtenerProducto } from "../../services/productosService";
 import { crearPedido } from "../../services/pedidosService";
+import { crearCheckoutSession } from "../../services/pagoService";
 import { useAuth } from "../../contexts/AuthContext";
 import insforge from "../../services/insforgeClient";
 
+
 const METODOS_PAGO = [
-  "Tarjeta de crédito",
-  "Tarjeta de débito",
-  "Yape / Plin",
-  "Pago contra entrega",
+  { id: "stripe", label: "Tarjeta de crédito / débito (Stripe)" },
 ];
 
 export default function CheckoutPage() {
@@ -21,8 +20,9 @@ export default function CheckoutPage() {
 
   const [items, setItems] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [form, setForm] = useState({ direccion: "", metodoPago: METODOS_PAGO[0] });
+  const [form, setForm] = useState({ direccion: "", metodoPago: "stripe" });
   const [error, setError] = useState("");
+  const [errorpedido, setErrorPedido] = useState("");
   const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function CheckoutPage() {
           }
         }
         setItems(itemsConProd);
-        setForm({ direccion: profile?.direccion || "", metodoPago: METODOS_PAGO[0] });
+        setForm({ direccion: profile?.direccion || "", metodoPago: "stripe" });
       } catch {
         // ignore
       } finally {
@@ -60,8 +60,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return <Navigate to="/carrito" replace />;
-  }
-
+  } 
   const total = items.reduce((acc, i) => acc + i.producto.precio * i.cantidad, 0);
 
   const handleChange = (e) => {
@@ -86,9 +85,29 @@ export default function CheckoutPage() {
           precioUnitario: i.producto.precio,
         })),
         direccionEnvio: form.direccion.trim(),
-        metodoPago: form.metodoPago,
+        metodoPago: form.metodoPago === "stripe" ? "Tarjeta de crédito" : METODOS_PAGO.find((m) => m.id === form.metodoPago)?.label || form.metodoPago,
       });
-      console.log("Pedido creado:", pedido);
+
+      if (form.metodoPago === "stripe") {
+        const sessionData = await crearCheckoutSession({
+          pedidoId: pedido.id,
+          items: items.map((i) => ({
+            productoId: i.producto.id,
+            cantidad: i.cantidad,
+            usuarioId: user.id,
+            stripe_price_id: i.producto.stripe_price_id,
+          })),
+          userEmail: user.email,
+        });
+
+        await vaciarCarrito();
+
+        if (sessionData?.checkoutSession?.url) {
+          window.location.assign(sessionData.checkoutSession.url);
+        }
+        return;
+      }
+
       await vaciarCarrito();
 
       insforge.emails.send({
@@ -98,7 +117,7 @@ export default function CheckoutPage() {
           <h1>¡Gracias por tu compra!</h1>
           <p>Tu pedido <strong>#${pedido.id}</strong> fue registrado correctamente.</p>
           <p><strong>Dirección de envío:</strong> ${form.direccion.trim()}</p>
-          <p><strong>Método de pago:</strong> ${form.metodoPago}</p>
+          <p><strong>Método de pago:</strong> ${METODOS_PAGO.find((m) => m.id === form.metodoPago)?.label || form.metodoPago}</p>
           <hr/>
           <p><strong>Productos:</strong></p>
           <ul>${items.map((i) => `<li>${i.producto.nombre} x ${i.cantidad} — S/ ${(i.producto.precio * i.cantidad).toFixed(2)}</li>`).join("")}</ul>
@@ -108,15 +127,14 @@ export default function CheckoutPage() {
 
       navigate("/pedido/confirmacion", { state: { pedidoId: pedido.id } });
     } catch (err) {
-      setError(err.message || "Error al crear el pedido");
+      setErrorPedido(err.message || "Error al procesar el pedido");
+      alert(errorpedido)
       setProcesando(false);
     }
   };
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <h1 className="text-2xl">Finalizar compra</h1>
-
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
         <form onSubmit={handleSubmit} className="card space-y-5 p-6" noValidate>
           <FormField
@@ -139,13 +157,23 @@ export default function CheckoutPage() {
               className="field-input"
             >
               {METODOS_PAGO.map((metodo) => (
-                <option key={metodo} value={metodo}>{metodo}</option>
+                <option key={metodo.id} value={metodo.id}>{metodo.label}</option>
               ))}
             </select>
           </div>
 
+          {form.metodoPago === "stripe" && (
+            <p className="text-xs text-slate-500">
+              Serás redirigido a Stripe para completar el pago de forma segura.
+            </p>
+          )}
+
           <Button type="submit" className="w-full" disabled={procesando}>
-            {procesando ? "Procesando..." : "Confirmar pedido"}
+            {procesando
+              ? "Procesando..."
+              : form.metodoPago === "stripe"
+                ? "Pagar con Stripe"
+                : "Confirmar pedido"}
           </Button>
         </form>
 

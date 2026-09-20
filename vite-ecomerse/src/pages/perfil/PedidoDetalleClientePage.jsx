@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { obtenerPedido } from "../../services/pedidosService";
 import { obtenerProducto } from "../../services/productosService";
 import Sidebar from "../../components/layout/Sidebar";
+import {actualizarEstadoPedido} from "../../services/pedidosService";
 
 export default function PedidoDetalleClientePage() {
   const { id } = useParams();
@@ -12,27 +13,41 @@ export default function PedidoDetalleClientePage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
+  const ESTADO_COLORS = {
+  pendiente: "bg-amber-50 text-amber-700",
+  en_transito: "bg-blue-50 text-blue-700",
+  entregado: "bg-green-50 text-green-700",
+  cancelado: "bg-red-50 text-red-700",
+};
   useEffect(() => {
-    async function fetchPedido() {
-    try {
-      const pedidoData = await obtenerPedido(id);
-      const productosData = await Promise.all(
-        pedidoData.order_items.map(async (item) => {
-          const producto = await obtenerProducto(item.producto_id);
-          return { ...item, nombre: producto.nombre };
-        })
-      );
-      setCargando(false);
-      setPedido(pedidoData || []);
-      setProductos(pedidoData.order_items || []);
-      setNombreProducto(productosData.map((item) => item.nombre));
-    } catch (error) {
-      setError(error.message);
-      setCargando(false);
-    }
-  }
   fetchPedido();
   }, [id]);
+  async function fetchPedido() {
+      try {
+        const pedidoData = await obtenerPedido(id);
+        const productosData = await Promise.all(
+          pedidoData.order_items.map(async (item) => {
+            const producto = await obtenerProducto(item.producto_id);
+            return { ...item, nombre: producto.nombre };
+          })
+        );
+        setCargando(false);
+        setPedido(pedidoData || []);
+        setProductos(pedidoData.order_items || []);
+        setNombreProducto(productosData.map((item) => item.nombre));
+      } catch (error) {
+        setError(error.message);
+        setCargando(false);
+      }
+    }
+  const handleCancelarPedido = async () => {
+    try {
+      await actualizarEstadoPedido(id, "cancelado");
+      fetchPedido();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
   if (!pedido) {
     return (
@@ -84,11 +99,18 @@ export default function PedidoDetalleClientePage() {
             </p>
             <p className="text-sm text-slate-600">
               <strong>Estado:</strong>{" "}
-              <span className="badge">{pedido.estado}</span>
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_COLORS[pedido.estado] || "bg-slate-50 text-slate-600"}`}>
+                      {pedido.estado}
+        </span>
             </p>
             <p className="text-sm text-slate-600">
               <strong>Total:</strong> S/ {pedido.total?.toFixed(2)}
             </p>
+            {pedido.estado === "pendiente" && (
+              <button onClick={handleCancelarPedido} className="btn bg-red-600 mt-4 hover:bg-red-700 text-white ">
+                Cancelar pedido
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto card">

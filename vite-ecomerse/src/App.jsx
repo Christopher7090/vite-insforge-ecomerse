@@ -16,8 +16,11 @@ import HistorialPedidosPage from "./pages/perfil/HistorialPedidosPage";
 import CarritoPage from "./pages/carrito/CarritoPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import ConfirmacionPedidoPage from "./pages/checkout/ConfirmacionPedidoPage";
+import PagoExitoPage from "./pages/checkout/PagoExitoPage";
+import PagoCanceladoPage from "./pages/checkout/PagoCanceladoPage";
 import ProductoDetallePage from "./pages/productos/ProductoDetallePage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminProductosPage from "./pages/admin/AdminProductosPage";
 import AdminProductoFormPage from "./pages/admin/AdminProductoFormPage";
 import AdminCategoriasPage from "./pages/admin/AdminCategoriasPage";
@@ -44,12 +47,15 @@ export default function App() {
         <Route path="/carrito" element={<ProtectedRoute><CarritoPage /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/pedido/confirmacion" element={<ProtectedRoute><ConfirmacionPedidoPage /></ProtectedRoute>} />
+        <Route path="/pago-exito" element={<ProtectedRoute><PagoExitoPage /></ProtectedRoute>} />
+        <Route path="/pago-cancelado" element={<ProtectedRoute><PagoCanceladoPage /></ProtectedRoute>} />
         <Route path="/pedido-detalle/:id" element={<ProtectedRoute><PedidoDetalleClientePage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
       <Route element={<ProtectedRoute rolRequerido="admin"><AdminLayout /></ProtectedRoute>}>
         <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/admin/productos" element={<AdminProductosPage />} />
         <Route path="/admin/productos/nuevo" element={<AdminProductoFormPage />} />
         <Route path="/admin/productos/:id/editar" element={<AdminProductoFormPage />} />

@@ -60,19 +60,35 @@ export const obtenerUsuario = async (id) => {
 };
 
 export const cambiarRolUsuario = async (userId, nuevoRol) => {
-  const res = await fetch(`${INSFORGE_URL}/api/auth/profiles/${userId}`, {
-    method: "PATCH",
-    headers: adminHeaders,
-    body: JSON.stringify({ profile: { rol: nuevoRol } }),
+  const { error } = await insforge.database.rpc("set_user_role", {
+    p_user_id: userId,
+    p_new_rol: nuevoRol,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Error updating role: ${res.status}`);
-  }
-  return await res.json();
+  if (error) throw error;
 };
 
 export const eliminarPedido = async (id) => {
+    const { data: pedido, error: fetchError } = await insforge.database
+    .from("orders")
+    .select("estado")
+    .eq("id", id)
+    .single();
+  if (fetchError) throw fetchError;
+  if(pedido?.estado == "pendiente" || pedido?.estado == "en_transito"){
+    const { data: items } = await insforge.database
+      .from("order_items")
+      .select("producto_id, cantidad")
+      .eq("pedido_id", id);
+
+    if (items) {
+      for (const item of items) {
+        await insforge.database.rpc("increment_stock", {
+          p_producto_id: item.producto_id,
+          p_cantidad: item.cantidad,
+        });
+      }
+    }
+  }
   const { error: itemsErr } = await insforge.database
     .from("order_items")
     .delete()
@@ -81,6 +97,29 @@ export const eliminarPedido = async (id) => {
 
   const { error } = await insforge.database.from("orders").delete().eq("id", id);
   if (error) throw error;
+};
+
+export const obtenerAnaliticas = async () => {
+  const [pedidosRes, productosRes, categoriasRes, usuariosRes] = await Promise.all([
+    insforge.database
+      .from("orders")
+      .select("id, estado, total, fecha, created_at, order_items(producto_id, cantidad, precio_unitario)"),
+    insforge.database
+      .from("products")
+      .select("id, nombre, precio, categoria_id, categories(nombre)"),
+    insforge.database.from("categories").select("id, nombre"),
+    fetch(`${INSFORGE_URL}/api/auth/users?limit=1`, { headers: adminHeaders }).then((r) => r.json()),
+  ]);
+
+  if (pedidosRes.error) throw pedidosRes.error;
+  if (productosRes.error) throw productosRes.error;
+
+  return {
+    pedidos: pedidosRes.data || [],
+    productos: productosRes.data || [],
+    categorias: categoriasRes.data || [],
+    totalUsuarios: usuariosRes.pagination?.total ?? 0,
+  };
 };
 
 export const eliminarUsuarios = async (userIds) => {
