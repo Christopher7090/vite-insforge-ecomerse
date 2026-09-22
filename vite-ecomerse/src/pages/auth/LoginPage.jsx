@@ -3,23 +3,37 @@ import { Link, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../../contexts/AuthContext";
-import { iniciarSesionGoogle } from "../../services/authService";
+import {
+  iniciarSesionGoogle,
+  reenviarVerificacion,
+  verificarEmail,
+} from "../../services/authService";
 
 // RF-01: iniciar sesion con correo y contrasena.
 // RF-06: valida que los campos obligatorios no esten vacios.
 // RF-07: muestra mensaje de error si las credenciales son incorrectas.
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, refreshProfile } = useAuth();
   const [form, setForm] = useState({ correo: "", password: "" });
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
 
+  // Email verification state
+  const [emailNoVerificado, setEmailNoVerificado] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [cargandoOtp, setCargandoOtp] = useState(false);
+  const [enviandoReenvio, setEnviandoReenvio] = useState(false);
+  const [mensajeReenvio, setMensajeReenvio] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrores({ ...errores, [e.target.name]: "" });
+    setErrorGeneral("");
   };
 
   const validar = () => {
@@ -33,6 +47,9 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorGeneral("");
+    setEmailNoVerificado(false);
+    setOtpError("");
+    setMensajeReenvio("");
     if (!validar()) return;
 
     setCargando(true);
@@ -40,10 +57,61 @@ export default function LoginPage() {
     setCargando(false);
 
     if (!resultado.ok) {
-      setErrorGeneral(resultado.error);
+      const msg = (resultado.error || "").toLowerCase();
+      if (msg.includes("verif") || msg.includes("verify")) {
+        setEmailNoVerificado(true);
+        setErrorGeneral("");
+      } else {
+        setErrorGeneral(resultado.error);
+      }
       return;
     }
     navigate("/");
+  };
+
+  const handleVerificarOtp = async (e) => {
+    e.preventDefault();
+    setOtpError("");
+    if (!otp.trim() || otp.trim().length < 6) {
+      setOtpError("Ingresa el código de 6 dígitos");
+      return;
+    }
+
+    setCargandoOtp(true);
+    const resultado = await verificarEmail(form.correo.trim(), otp.trim());
+    setCargandoOtp(false);
+
+    if (!resultado.ok) {
+      setOtpError(resultado.error);
+      return;
+    }
+
+    await refreshProfile();
+    navigate("/");
+  };
+
+  const handleReenviar = async () => {
+    if (cooldown > 0 || enviandoReenvio) return;
+    setEnviandoReenvio(true);
+    setMensajeReenvio("");
+    setOtpError("");
+    const resultado = await reenviarVerificacion(form.correo.trim());
+    setEnviandoReenvio(false);
+    if (resultado.ok) {
+      setMensajeReenvio("Código de verificación reenviado. Revisa tu correo.");
+      setCooldown(60);
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setOtpError(resultado.error);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -56,6 +124,85 @@ export default function LoginPage() {
     }
     // On success, the SDK redirects to Google
   };
+
+  // Show inline OTP verification when email is not verified
+  if (emailNoVerificado) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
+        <div className="card p-8">
+          <h1 className="text-2xl">Verifica tu correo</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Enviamos un código de 6 dígitos a <strong>{form.correo}</strong>.
+            Ingrésalo a continuación para activar tu cuenta.
+          </p>
+
+          {otpError && (
+            <div className="mt-4 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+              {otpError}
+            </div>
+          )}
+
+          <form onSubmit={handleVerificarOtp} className="mt-6 space-y-4" noValidate>
+            <FormField
+              label="Código de verificación"
+              name="otp"
+              type="text"
+              value={otp}
+              onChange={(e) => {
+                setOtp(e.target.value);
+                setOtpError("");
+              }}
+              error={otpError}
+              placeholder="123456"
+              maxLength={6}
+              required
+            />
+
+            <Button type="submit" className="w-full" disabled={cargandoOtp}>
+              {cargandoOtp ? "Verificando..." : "Verificar correo"}
+            </Button>
+          </form>
+
+          {mensajeReenvio && (
+            <div className="mt-4 rounded-lg bg-green-50 px-3.5 py-2.5 text-sm text-green-700">
+              {mensajeReenvio}
+            </div>
+          )}
+
+          <div className="mt-4 text-center text-sm text-slate-500">
+            ¿No recibiste el código?{" "}
+            <button
+              type="button"
+              onClick={handleReenviar}
+              disabled={cooldown > 0 || enviandoReenvio}
+              className="font-medium text-brand-600 hover:underline disabled:text-slate-400 disabled:no-underline"
+            >
+              {cooldown > 0
+                ? `Reenviar en ${cooldown}s`
+                : enviandoReenvio
+                  ? "Reenviando..."
+                  : "Reenviar código"}
+            </button>
+          </div>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            <button
+              type="button"
+              onClick={() => {
+                setEmailNoVerificado(false);
+                setOtp("");
+                setOtpError("");
+                setMensajeReenvio("");
+              }}
+              className="font-medium text-brand-600 hover:underline"
+            >
+              Volver a iniciar sesión
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">

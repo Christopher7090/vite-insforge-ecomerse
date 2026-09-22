@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
-import { registrar, verificarEmail } from "../../services/authService";
+import { registrar, verificarEmail, reenviarVerificacion } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
 // RF-02: registrar una cuenta nueva (nombre, correo, contrasena, telefono).
 // RF-06: valida que los campos obligatorios no esten vacios.
 export default function RegistroPage() {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const [form, setForm] = useState({
     nombre: "",
     correo: "",
@@ -25,6 +27,9 @@ export default function RegistroPage() {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [cargandoOtp, setCargandoOtp] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [enviandoReenvio, setEnviandoReenvio] = useState(false);
+  const [mensajeReenvio, setMensajeReenvio] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -91,7 +96,31 @@ export default function RegistroPage() {
       return;
     }
 
+    await refreshProfile();
     navigate("/");
+  };
+
+  const handleReenviar = async () => {
+    if (cooldown > 0 || enviandoReenvio) return;
+    setEnviandoReenvio(true);
+    setMensajeReenvio("");
+    const resultado = await reenviarVerificacion(correoVerificacion);
+    setEnviandoReenvio(false);
+    if (resultado.ok) {
+      setMensajeReenvio("Código reenviado. Revisa tu correo.");
+      setCooldown(60);
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setOtpError(resultado.error);
+    }
   };
 
   // Show OTP verification screen
@@ -131,6 +160,28 @@ export default function RegistroPage() {
               {cargandoOtp ? "Verificando..." : "Verificar correo"}
             </Button>
           </form>
+
+          {mensajeReenvio && (
+            <div className="mt-4 rounded-lg bg-green-50 px-3.5 py-2.5 text-sm text-green-700">
+              {mensajeReenvio}
+            </div>
+          )}
+
+          <div className="mt-4 text-center text-sm text-slate-500">
+            ¿No recibiste el código?{" "}
+            <button
+              type="button"
+              onClick={handleReenviar}
+              disabled={cooldown > 0 || enviandoReenvio}
+              className="font-medium text-brand-600 hover:underline disabled:text-slate-400 disabled:no-underline"
+            >
+              {cooldown > 0
+                ? `Reenviar en ${cooldown}s`
+                : enviandoReenvio
+                  ? "Reenviando..."
+                  : "Reenviar código"}
+            </button>
+          </div>
 
           <p className="mt-6 text-center text-sm text-slate-500">
             <Link to="/login" className="font-medium text-brand-600 hover:underline">

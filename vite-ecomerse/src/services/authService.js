@@ -21,6 +21,11 @@ export const registrar = async ({ nombre, correo, password, telefono, direccion 
   if (error) return { ok: false, error: error.message };
 
   if (data?.requireEmailVerification) {
+    // Preserve profile data until verification completes
+    sessionStorage.setItem(
+      "pending_profile",
+      JSON.stringify({ nombre, telefono, direccion, rol: "cliente" })
+    );
     return { ok: true, requireEmailVerification: true, email: correo };
   }
 
@@ -42,12 +47,25 @@ export const verificarEmail = async (email, otp) => {
   const { data, error } = await insforge.auth.verifyEmail({ email, otp });
   if (error) return { ok: false, error: error.message };
 
-  // Save profile data after verification
+  // Restore and save profile data that was collected at registration
   if (data?.user) {
-    await insforge.auth.setProfile({ rol: "cliente" });
+    const pending = sessionStorage.getItem("pending_profile");
+    const profileData = pending ? JSON.parse(pending) : { rol: "cliente" };
+    await insforge.auth.setProfile(profileData);
+    sessionStorage.removeItem("pending_profile");
   }
 
   return { ok: true, usuario: data?.user };
+};
+
+// Resend verification code
+export const reenviarVerificacion = async (email) => {
+  const { error } = await insforge.auth.resendVerificationEmail({
+    email,
+    redirectTo: window.location.origin + "/login",
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 };
 
 // Sign out

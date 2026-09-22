@@ -1,15 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
 import { enviarRecuperacion } from "../../services/authService";
 
 // RF-03: solicitar la recuperacion de contrasena mediante correo.
 export default function RecuperarPasswordPage() {
+  const navigate = useNavigate();
   const [correo, setCorreo] = useState("");
   const [error, setError] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [enviandoReenvio, setEnviandoReenvio] = useState(false);
+  const [mensajeReenvio, setMensajeReenvio] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +26,33 @@ export default function RecuperarPasswordPage() {
     await enviarRecuperacion(correo.trim());
     setCargando(false);
     setEnviado(true);
+  };
+
+  const handleContinuar = () => {
+    navigate(`/reset-password?correo=${encodeURIComponent(correo.trim())}`);
+  };
+
+  const handleReenviar = async () => {
+    if (cooldown > 0 || enviandoReenvio) return;
+    setEnviandoReenvio(true);
+    setMensajeReenvio("");
+    const resultado = await enviarRecuperacion(correo.trim());
+    setEnviandoReenvio(false);
+    if (resultado.ok) {
+      setMensajeReenvio("Código reenviado. Revisa tu correo.");
+      setCooldown(60);
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setError(resultado.error);
+    }
   };
 
   return (
@@ -54,9 +85,32 @@ export default function RecuperarPasswordPage() {
               Si <strong>{correo}</strong> está registrado, recibirás un correo con un código de
               6 dígitos para restablecer tu contraseña.
             </div>
-            <Link to="/reset-password" className="btn-primary block text-center">
+
+            {mensajeReenvio && (
+              <div className="rounded-lg bg-green-50 px-3.5 py-2.5 text-sm text-green-700">
+                {mensajeReenvio}
+              </div>
+            )}
+
+            <Button className="w-full" onClick={handleContinuar}>
               Continuar a restablecer contraseña
-            </Link>
+            </Button>
+
+            <div className="text-center text-sm text-slate-500">
+              ¿No recibiste el código?{" "}
+              <button
+                type="button"
+                onClick={handleReenviar}
+                disabled={cooldown > 0 || enviandoReenvio}
+                className="font-medium text-brand-600 hover:underline disabled:text-slate-400 disabled:no-underline"
+              >
+                {cooldown > 0
+                  ? `Reenviar en ${cooldown}s`
+                  : enviandoReenvio
+                    ? "Reenviando..."
+                    : "Reenviar código"}
+              </button>
+            </div>
           </div>
         )}
 
