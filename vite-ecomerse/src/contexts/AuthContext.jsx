@@ -9,10 +9,50 @@ import {
 
 const AuthContext = createContext(null);
 
+
+const SESION_KEY = "sesion_activa";
+
+const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const marcarSesionActiva = () => {
+  try {
+    localStorage.setItem(SESION_KEY, "1");
+  } catch {
+    // sin storage: solo se pierde el aviso, no la sesión
+  }
+};
+
+const haySesionPrevia = () => {
+  try {
+    return localStorage.getItem(SESION_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const limpiarSesionPrevia = () => {
+  try {
+    localStorage.removeItem(SESION_KEY);
+  } catch {
+    // ignorar
+  }
+};
+
+
+const esErrorTransitorio = (error) => {
+  if (!error) return false;
+  if (error.name === "AbortError") return true;
+  const status = Number(error.statusCode ?? error.status ?? 0);
+  if (!status) return true; // sin respuesta / sin red
+  if (status === 401 || status === 403) return false; // el servidor dijo que no
+  return status === 408 || status === 429 || status >= 500;
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sesionExpirada, setSesionExpirada] = useState(false);
 
   const fetchProfile = useCallback(async (userId) => {
     try {
@@ -38,45 +78,103 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       await fetchProfile(data.user.id);
       await syncGuestCart(data.user.id);
+      marcarSesionActiva();
+      setSesionExpirada(false);
       return data.user;
     } catch {
       return null;
     }
   }, [fetchProfile]);
 
-  useEffect(() => {
-    let cancelled = false;
 
-    async function hydrate() {
+  const restaurarSesion = useCallback(async ({ reintentos = 3 } = {}) => {
+    let ultimoError = null;
+
+    for (let intento = 1; intento <= reintentos; intento++) {
+      if (intento > 1) await dormir(400 * 2 ** (intento - 2)); // 400ms, 800ms
+
+      // Sin red no tiene sentido golpear el backend: se espera al evento `online`.
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        ultimoError = { statusCode: 0, message: "Sin conexión" };
+        continue;
+      }
+
       try {
         const { data, error } = await insforge.auth.getCurrentUser();
-        if (cancelled) return;
-
-        if (!error && data?.user) {
-          setUser(data.user);
-          // Si el registro quedó a medias (verificación en otra pestaña, etc.)
-          // el perfil del formulario se guarda ahora, antes de leerlo.
-          await aplicarPerfilPendiente(data.user.email);
-          await fetchProfile(data.user.id);
-        } else {
-          setUser(null);
-          setProfile(null);
+        if (!error && data?.user) return { estado: "autenticado", user: data.user };
+        if (error && esErrorTransitorio(error)) {
+          ultimoError = error;
+          continue;
         }
-      } catch {
-        if (!cancelled) {
-          setUser(null);
-          setProfile(null);
+        // 401/403 (o el backend respondió sin sesión): es definitivo.
+        return { estado: "sin_sesion", error };
+      } catch (error) {
+        if (esErrorTransitorio(error)) {
+          ultimoError = error;
+          continue;
         }
-      } finally {
-        if (!cancelled) setLoading(false);
+        return { estado: "sin_sesion", error };
       }
     }
 
-    hydrate();
-    return () => {
-      cancelled = true;
+    // Se agotaron los reintentos con errores de red: NO se cierra la sesión.
+    return { estado: "indeterminado", error: ultimoError };
+  }, []);
+
+  // Aplica el resultado de restaurarSesion al estado de React.
+  const aplicarResultado = useCallback(
+    async (resultado) => {
+      try {
+        if (resultado.estado === "autenticado") {
+          const usuario = resultado.user;
+          setUser(usuario);
+          // Si el registro quedó a medias (verificación en otra pestaña, etc.)
+          // el perfil del formulario se guarda ahora, antes de leerlo.
+          await aplicarPerfilPendiente(usuario.email);
+          await fetchProfile(usuario.id);
+          marcarSesionActiva();
+          setSesionExpirada(false);
+          return;
+        }
+
+        if (resultado.estado === "indeterminado") {
+          // Falló la red: el usuario puede seguir en la sesión de antes, así que
+          // no se toca el estado. Se reintenta cuando vuelva la conexión.
+          return;
+        }
+
+        // Sesión definitivamente no restaurada.
+        setUser(null);
+        setProfile(null);
+        if (haySesionPrevia()) setSesionExpirada(true);
+        limpiarSesionPrevia();
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchProfile]
+  );
+
+  const hidratarSesion = useCallback(async () => {
+    const resultado = await restaurarSesion();
+    await aplicarResultado(resultado);
+    return resultado;
+  }, [restaurarSesion, aplicarResultado]);
+
+  useEffect(() => {
+    void hidratarSesion();
+  }, [hidratarSesion]);
+
+  // Si la restauración falló por falta de red, se vuelve a intentar en cuanto
+  // el navegador recupere la conexión (mientras no haya usuario en el contexto).
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const alVolverLaRed = () => {
+      if (!user) void hidratarSesion();
     };
-  }, [fetchProfile]);
+    window.addEventListener("online", alVolverLaRed);
+    return () => window.removeEventListener("online", alVolverLaRed);
+  }, [user, hidratarSesion]);
 
   const login = async (email, password) => {
     const { data, error } = await insforge.auth.signInWithPassword({
@@ -89,6 +187,8 @@ export function AuthProvider({ children }) {
     setUser(data.user);
     await fetchProfile(data.user.id);
     await syncGuestCart(data.user.id);
+    marcarSesionActiva();
+    setSesionExpirada(false);
     return { ok: true, user: data.user };
   };
 
@@ -125,7 +225,12 @@ export function AuthProvider({ children }) {
     await insforge.auth.signOut();
     setUser(null);
     setProfile(null);
+    // Cierre explícito: no corresponde el aviso "tu sesión expiró".
+    limpiarSesionPrevia();
+    setSesionExpirada(false);
   };
+
+  const descartarAvisoSesion = useCallback(() => setSesionExpirada(false), []);
 
   const signInWithGoogle = async () => {
     const { error } = await insforge.auth.signInWithOAuth("google", {
@@ -199,6 +304,8 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
+    sesionExpirada,
+    descartarAvisoSesion,
     isAuthenticated: !!user,
     isAdmin: profile?.rol === "admin",
     login,

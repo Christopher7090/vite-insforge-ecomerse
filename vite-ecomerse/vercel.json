@@ -1,5 +1,27 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "https://y74su2bv.us-east.insforge.app/api/:path*"
+    },
+    {
+      "source": "/functions/:path*",
+      "destination": "https://y74su2bv.us-east.insforge.app/functions/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/auth/:path*",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/api/database/:path*",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
   ]
 }
