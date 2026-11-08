@@ -31,7 +31,7 @@ export default function PerfilPage() {
           <div className="card p-8 mb-8">
             <div className="space-y-4">
               <p className="text-slate-600">
-                <strong>Nombre:</strong> {profile?.name || "—"}
+                <strong>Nombre:</strong> {profile?.name || profile?.nombre || "—"}
               </p>
               <p className="text-slate-600">
                 <strong>Correo:</strong> {user?.email || "—"}

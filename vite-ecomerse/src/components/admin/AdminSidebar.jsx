@@ -107,10 +107,10 @@ export default function AdminSidebar({ open, onClose }) {
       <div className="border-t border-brand-700 p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-700 text-sm font-semibold text-white">
-            {(profile?.nombre || user?.email || "?")[0].toUpperCase()}
+            {(profile?.nombre || profile?.name || user?.email || "?")[0].toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{profile?.nombre || user?.email}</p>
+            <p className="truncate text-sm font-medium">{profile?.nombre || profile?.name || user?.email}</p>
             <p className="truncate text-xs text-brand-300">{user?.email}</p>
           </div>
         </div>
