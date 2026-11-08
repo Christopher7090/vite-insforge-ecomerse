@@ -74,7 +74,7 @@ export default function Navbar() {
           ) : isAuthenticated ? (
             <>
               <span className="hidden text-sm text-slate-600 sm:inline">
-                Hola, {(profile?.nombre || user?.email || "").split(" ")[0]}
+                Hola, {(profile?.nombre || profile?.name || user?.email || "").split(" ")[0]}
               </span>
               <div className="relative">
                 <button

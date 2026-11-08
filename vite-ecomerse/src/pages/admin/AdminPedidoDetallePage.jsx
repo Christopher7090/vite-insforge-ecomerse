@@ -135,7 +135,7 @@ export default function AdminPedidoDetallePage() {
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="card p-5">
           <h2 className="text-sm font-medium text-slate-500">Cliente</h2>
-          <p className="mt-1 font-medium text-slate-800">{usuario?.profile?.nombre || "—"}</p>
+          <p className="mt-1 font-medium text-slate-800">{usuario?.profile?.nombre || usuario?.profile?.name || "—"}</p>
           <p className="text-sm text-slate-600">{usuario?.email || "—"}</p>
         </div>
         <div className="card p-5">

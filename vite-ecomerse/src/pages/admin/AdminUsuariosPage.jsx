@@ -23,6 +23,7 @@ export default function AdminUsuariosPage() {
     return (
       u.email?.toLowerCase().includes(q) ||
       u.profile?.name?.toLowerCase().includes(q) ||
+      u.profile?.nombre?.toLowerCase().includes(q) ||
       u.profile?.telefono?.includes(q)
     );
   });
@@ -76,9 +77,9 @@ export default function AdminUsuariosPage() {
                     <tr key={u.id} className="hover:bg-slate-50">
                       <td className="flex items-center gap-3 px-4 py-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">
-                          {(u.profile?.name || u.email || "?")[0].toUpperCase()}
+                          {(u.profile?.name || u.profile?.nombre || u.email || "?")[0].toUpperCase()}
                         </div>
-                        <span className="font-medium text-slate-800">{u.profile?.name || "—"}</span>
+                        <span className="font-medium text-slate-800">{u.profile?.name || u.profile?.nombre || "—"}</span>
                       </td>
                       <td className="px-4 py-3 text-slate-600">{u.email}</td>
                       <td className="px-4 py-3 text-slate-600">{u.profile?.telefono || "—"}</td>

@@ -99,7 +99,7 @@ export default async function (req: Request): Promise<Response> {
     const priceBody = toFormData({
       product: stripeProduct.id,
       unit_amount: Math.round(price_cents),
-      currency: "usd",
+      currency: "pen",
       metadata: { product_id },
     });
     const stripePrice = await stripeRequest("/prices", priceBody);
