@@ -76,6 +76,9 @@ export default function RegistroPage() {
       return;
     }
 
+    // Si el backend no pidió verificación ya hay sesión en el SDK: se refleja
+    // en el contexto para no caer en la home como deslogueado.
+    await refreshProfile();
     navigate("/");
   };
 

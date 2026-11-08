@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import insforge from "../services/insforgeClient";
 import { syncGuestCart } from "../services/carritoService";
+import {
+  registrar,
+  verificarEmail as verificarEmailService,
+  aplicarPerfilPendiente,
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -24,6 +29,21 @@ export function AuthProvider({ children }) {
     return null;
   }, []);
 
+  // Recarga la sesión desde el SDK (útil tras verificar el correo, donde el SDK
+  // ya tiene el token pero el contexto todavía no lo sabe) y refresca el perfil.
+  const sincronizarSesion = useCallback(async () => {
+    try {
+      const { data, error } = await insforge.auth.getCurrentUser();
+      if (error || !data?.user) return null;
+      setUser(data.user);
+      await fetchProfile(data.user.id);
+      await syncGuestCart(data.user.id);
+      return data.user;
+    } catch {
+      return null;
+    }
+  }, [fetchProfile]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -34,6 +54,9 @@ export function AuthProvider({ children }) {
 
         if (!error && data?.user) {
           setUser(data.user);
+          // Si el registro quedó a medias (verificación en otra pestaña, etc.)
+          // el perfil del formulario se guarda ahora, antes de leerlo.
+          await aplicarPerfilPendiente(data.user.email);
           await fetchProfile(data.user.id);
         } else {
           setUser(null);
@@ -61,40 +84,41 @@ export function AuthProvider({ children }) {
       password,
     });
     if (error) return { ok: false, error: error.message };
+    // Aplica el perfil guardado en el registro si aún estaba pendiente.
+    await aplicarPerfilPendiente(email);
     setUser(data.user);
     await fetchProfile(data.user.id);
     await syncGuestCart(data.user.id);
     return { ok: true, user: data.user };
   };
 
-  const register = async ({ email, password, name }) => {
-    const { data, error } = await insforge.auth.signUp({
-      email,
+  const register = async ({ email, password, name, telefono = "", direccion = "" }) => {
+    const resultado = await registrar({
+      nombre: name ?? "",
+      correo: email,
       password,
-      name,
-      redirectTo: window.location.origin + "/login",
+      telefono,
+      direccion,
     });
-    if (error) return { ok: false, error: error.message };
-    if (data?.requireEmailVerification) {
+    if (!resultado.ok) return resultado;
+
+    if (resultado.requireEmailVerification) {
+      // El perfil queda guardado hasta que verifique el correo.
       return { ok: true, requireEmailVerification: true, email };
     }
-    if (data?.accessToken) {
-      setUser(data.user);
-      await fetchProfile(data.user.id);
-      await syncGuestCart(data.user.id);
-    }
-    return { ok: true, user: data.user };
+
+    const usuario = await sincronizarSesion();
+    return { ok: true, user: usuario ?? resultado.usuario ?? null };
   };
 
   const verifyEmail = async (email, otp) => {
-    const { data, error } = await insforge.auth.verifyEmail({ email, otp });
-    if (error) return { ok: false, error: error.message };
-    if (data?.user) {
-      setUser(data.user);
-      await fetchProfile(data.user.id);
-      await syncGuestCart(data.user.id);
-    }
-    return { ok: true, user: data.user };
+    const resultado = await verificarEmailService(email, otp);
+    if (!resultado.ok) return resultado;
+
+    // La sesión ya existe en el SDK: se refleja en el contexto (y si el perfil
+    // no se pudo guardar, queda pendiente para el próximo inicio de sesión).
+    const usuario = await sincronizarSesion();
+    return { ok: true, user: usuario ?? resultado.usuario ?? null };
   };
 
   const logout = async () => {
@@ -137,7 +161,14 @@ export function AuthProvider({ children }) {
   };
 
   const updateProfile = async (changes) => {
-    const { error } = await insforge.auth.setProfile(changes);
+    if (!user) return { ok: false, error: "No hay sesión activa" };
+
+    const payload = { ...changes };
+    // `name` (InsForge) y `nombre` (UI legacy) deben quedar sincronizados.
+    if (payload.name && !payload.nombre) payload.nombre = payload.name;
+    if (payload.nombre && !payload.name) payload.name = payload.nombre;
+
+    const { error } = await insforge.auth.setProfile(payload);
     if (error) return { ok: false, error: error.message };
     const updated = await fetchProfile(user.id);
     return { ok: true, profile: updated };
@@ -154,8 +185,15 @@ export function AuthProvider({ children }) {
 
   const userId = user?.id;
   const refreshProfile = useCallback(async () => {
-    if (userId) await fetchProfile(userId);
-  }, [userId, fetchProfile]);
+    if (userId) {
+      await fetchProfile(userId);
+      return;
+    }
+    // Sin usuario en el contexto (p. ej. recién verificó el correo): la sesión
+    // ya existe en el SDK, así que se hidrata aquí. Antes esto era un no-op y
+    // la app seguía mostrando al usuario como deslogueado.
+    await sincronizarSesion();
+  }, [userId, fetchProfile, sincronizarSesion]);
 
   const value = {
     user,

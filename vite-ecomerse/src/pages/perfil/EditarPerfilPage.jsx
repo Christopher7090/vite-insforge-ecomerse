@@ -9,7 +9,7 @@ export default function EditarPerfilPage() {
   const { user, profile, updateProfile, loading } = useAuth();
 
   const [form, setForm] = useState({
-    nombre: profile?.name || "",
+    nombre: profile?.name || profile?.nombre || "",
     telefono: profile?.telefono || "",
     direccion: profile?.direccion || "",
   });
