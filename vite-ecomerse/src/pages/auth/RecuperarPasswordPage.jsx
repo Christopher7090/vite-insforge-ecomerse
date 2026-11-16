@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 // RF-03: solicitar la recuperacion de contrasena mediante correo.
 export default function RecuperarPasswordPage() {
   const navigate = useNavigate();
-  const [correo, setCorreo] = useState("");
+
   const [error, setError] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -16,12 +16,8 @@ export default function RecuperarPasswordPage() {
   const [enviandoReenvio, setEnviandoReenvio] = useState(false);
   const [mensajeReenvio, setMensajeReenvio] = useState("");
   const { user } = useAuth();
+  const [correo, setCorreo] = useState(user?.email || "");
 
-  useEffect(() => {
-    if(user?.email){
-      setCorreo(user.email);
-    }
-  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
