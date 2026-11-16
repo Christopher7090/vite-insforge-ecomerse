@@ -94,7 +94,7 @@ export default function Navbar() {
                     <Link to="/editar-perfil" onClick={handleDropdownToggle} className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
                       Editar perfil
                     </Link>
-                    <Link to="/cambiar-password" onClick={handleDropdownToggle} className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                    <Link to="/recuperar-password" onClick={handleDropdownToggle} className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
                       Cambiar contraseña
                     </Link>
                     <Link to="/historial-pedidos" onClick={handleDropdownToggle} className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">

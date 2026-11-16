@@ -9,18 +9,14 @@ import {
   verificarEmail,
 } from "../../services/authService";
 
-// RF-01: iniciar sesion con correo y contrasena.
-// RF-06: valida que los campos obligatorios no esten vacios.
-// RF-07: muestra mensaje de error si las credenciales son incorrectas.
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, refreshProfile } = useAuth();
+  const { login, refreshProfile, sesionExpirada, descartarAvisoSesion } = useAuth();
   const [form, setForm] = useState({ correo: "", password: "" });
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
-
   // Email verification state
   const [emailNoVerificado, setEmailNoVerificado] = useState(false);
   const [otp, setOtp] = useState("");
@@ -210,6 +206,20 @@ export default function LoginPage() {
         <h1 className="text-2xl">Inicia sesión</h1>
         <p className="mt-1 text-sm text-slate-500">Ingresa a tu cuenta de TechStore.</p>
 
+        {sesionExpirada && (
+          <div className="mt-4 flex items-start justify-between gap-3 rounded-lg bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
+            <span>Tu sesión expiró, inicia sesión de nuevo.</span>
+            <button
+              type="button"
+              onClick={descartarAvisoSesion}
+              aria-label="Cerrar aviso"
+              className="shrink-0 font-medium text-amber-700 hover:text-amber-900"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {errorGeneral && (
           <div className="mt-4 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
             {errorGeneral}
@@ -235,9 +245,9 @@ export default function LoginPage() {
             onChange={handleChange}
             error={errores.password}
             placeholder="••••••••"
+            showToggle={true}
             required
           />
-
           <div className="flex justify-end">
             <Link to="/recuperar-password" className="text-sm text-brand-600 hover:underline">
               ¿Olvidaste tu contraseña?
