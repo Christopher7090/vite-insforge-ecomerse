@@ -255,6 +255,7 @@ export default function RegistroPage() {
             onChange={handleChange}
             error={errores.confirmarPassword}
             placeholder="••••••••"
+            showToggle={true}
             required
           />
 

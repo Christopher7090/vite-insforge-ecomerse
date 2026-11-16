@@ -17,7 +17,6 @@ export default function LoginPage() {
   const [errorGeneral, setErrorGeneral] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
-
   // Email verification state
   const [emailNoVerificado, setEmailNoVerificado] = useState(false);
   const [otp, setOtp] = useState("");
@@ -246,9 +245,9 @@ export default function LoginPage() {
             onChange={handleChange}
             error={errores.password}
             placeholder="••••••••"
+            showToggle={true}
             required
           />
-
           <div className="flex justify-end">
             <Link to="/recuperar-password" className="text-sm text-brand-600 hover:underline">
               ¿Olvidaste tu contraseña?
