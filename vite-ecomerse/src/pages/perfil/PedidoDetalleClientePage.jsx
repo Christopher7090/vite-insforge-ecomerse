@@ -3,12 +3,17 @@ import { useParams, Link } from "react-router-dom";
 import { obtenerPedido } from "../../services/pedidosService";
 import { obtenerProducto } from "../../services/productosService";
 import Sidebar from "../../components/layout/Sidebar";
+import { crearCheckoutSession } from "../../services/pagoService";
+import { useAuth } from "../../contexts/AuthContext";
 import {actualizarEstadoPedido} from "../../services/pedidosService";
 
 export default function PedidoDetalleClientePage() {
+
+  const { user } = useAuth();  
   const { id } = useParams();
   const [pedido, setPedido] = useState({});
   const [productos, setProductos] = useState([]);
+  const [items, setItems] = useState([]);
   const [nombreproducto, setNombreProducto] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +28,23 @@ export default function PedidoDetalleClientePage() {
   fetchPedido();
   }, [id]);
   async function fetchPedido() {
+      try{
+        const pedidoData = await obtenerPedido(id);
+        const itemsConProd = [];
+        for (const item of pedidoData.order_items) {
+          try {
+            const prod = await obtenerProducto(item.producto_id);
+            itemsConProd.push({ ...item, producto: prod });
+          } catch (error) {
+        setError(error.message);
+        setCargando(false);
+      }
+      }
+      setItems(itemsConProd);
+    }catch (error) {
+        setError(error.message);
+        setCargando(false);
+      }
       try {
         const pedidoData = await obtenerPedido(id);
         const productosData = await Promise.all(
@@ -48,6 +70,21 @@ export default function PedidoDetalleClientePage() {
       setError(error.message);
     }
   };
+  const handleReintentarPago = async () => {
+    const sessionData = await crearCheckoutSession({
+          pedidoId: id,
+          items: items.map((i) => ({
+            productoId: i.producto.id,
+            cantidad: i.cantidad,
+            usuarioId: user.id,
+            stripe_price_id: i.producto.stripe_price_id,
+          })),
+          userEmail: user.email,
+        });
+    if (sessionData?.checkoutSession?.url) {
+          window.location.assign(sessionData.checkoutSession.url);
+        }
+  }
 
   if (!pedido) {
     return (
@@ -107,9 +144,14 @@ export default function PedidoDetalleClientePage() {
               <strong>Total:</strong> S/ {pedido.total?.toFixed(2)}
             </p>
             {pedido.estado === "pendiente" && (
-              <button onClick={handleCancelarPedido} className="btn bg-red-600 mt-4 hover:bg-red-700 text-white ">
+              <>
+              <button onClick={handleReintentarPago} className="btn bg-blue-600 mt-4 hover:bg-blue-700 text-white mr-2">
+                Reintentar pago
+              </button>
+              <button onClick={handleCancelarPedido} className="btn bg-red-600 mt-4 hover:bg-red-700 text-white">
                 Cancelar pedido
               </button>
+              </>
             )}
           </div>
 

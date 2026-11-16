@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormField from "../../components/ui/FormField";
 import Button from "../../components/ui/Button";
 import { enviarRecuperacion } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
 // RF-03: solicitar la recuperacion de contrasena mediante correo.
 export default function RecuperarPasswordPage() {
   const navigate = useNavigate();
-  const [correo, setCorreo] = useState("");
+
   const [error, setError] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [enviandoReenvio, setEnviandoReenvio] = useState(false);
   const [mensajeReenvio, setMensajeReenvio] = useState("");
+  const { user } = useAuth();
+  const [correo, setCorreo] = useState(user?.email || "");
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,12 +117,18 @@ export default function RecuperarPasswordPage() {
             </div>
           </div>
         )}
-
-        <p className="mt-6 text-center text-sm text-slate-500">
+{ user ?(
+          <div className="mt-6 text-center">
+            <Link to="/perfil" className="font-medium text-brand-600 hover:underline">
+              Ir a mi perfil
+            </Link>
+          </div>
+        ):
+          (<p className="mt-6 text-center text-sm text-slate-500">
           <Link to="/login" className="font-medium text-brand-600 hover:underline">
             Volver a iniciar sesión
           </Link>
-        </p>
+        </p>)}
       </div>
     </div>
   );

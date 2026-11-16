@@ -21,7 +21,7 @@ const menuItems = [
     ),
   },
   {
-    to: "/cambiar-password",
+    to: "/recuperar-password",
     label: "Cambiar contraseña",
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

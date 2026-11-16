@@ -172,6 +172,7 @@ export default function RestablecerPasswordPage() {
                 onChange={handleChange}
                 error={errores.password}
                 placeholder="Mínimo 6 caracteres"
+                showToggle={true}
                 required
               />
               <FormField
