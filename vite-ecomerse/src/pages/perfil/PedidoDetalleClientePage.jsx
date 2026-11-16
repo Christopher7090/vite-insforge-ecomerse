@@ -35,8 +35,10 @@ export default function PedidoDetalleClientePage() {
           try {
             const prod = await obtenerProducto(item.producto_id);
             itemsConProd.push({ ...item, producto: prod });
-          } catch {
-          }
+          } catch (error) {
+        setError(error.message);
+        setCargando(false);
+      }
       }
       setItems(itemsConProd);
     }catch (error) {

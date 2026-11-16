@@ -18,7 +18,9 @@ export default function RecuperarPasswordPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    setCorreo(user?.email || "");
+    if(user?.email){
+      setCorreo(user.email);
+    }
   }, [user]);
 
   const handleSubmit = async (e) => {
