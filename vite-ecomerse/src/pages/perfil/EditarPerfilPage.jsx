@@ -110,8 +110,10 @@ export default function EditarPerfilPage() {
               error={errores.telefono}
               placeholder="999-888-777"
             />
-            <FormField
+            <textarea
+              className={`field-input w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${errores.direccion ? "border-red-500" : ""}`}
               label="Dirección"
+              type="text"
               name="direccion"
               value={form.direccion}
               onChange={handleChange}

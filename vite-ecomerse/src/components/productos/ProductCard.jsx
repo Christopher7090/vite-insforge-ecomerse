@@ -12,10 +12,10 @@ export default function ProductCard({ producto, categoriaNombre }) {
     <div className="card group flex flex-col overflow-hidden transition hover:shadow-md">
       <Link to={`/producto/${producto.id}`} className="flex flex-1 flex-col">
         <div className="flex aspect-[4/3] items-center justify-center bg-brand-50">
-          {imagenUrl ? (
+          {producto.imagenes?.[0] ? (
             <img src={imagenUrl} alt={producto.nombre} className="h-full w-full object-contain p-4" />
           ) : (
-            <span className="text-xs text-brand-300">Imagen del producto</span>
+            <img src="../../src/assets/images.png" alt="" className="h-full w-full object-contain" />
           )}
         </div>
         <div className="flex flex-1 flex-col gap-1.5 p-4 pb-0">
