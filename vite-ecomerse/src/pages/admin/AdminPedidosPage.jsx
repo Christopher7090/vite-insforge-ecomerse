@@ -3,6 +3,7 @@ import { Link,useLocation } from "react-router-dom";
 import { listarPedidos, listarPedidosDeUsuario } from "../../services/pedidosService";
 
 const ESTADO_COLORS = {
+  pagado: "bg-yellow-50 text-green-700",
   pendiente: "bg-amber-50 text-amber-700",
   en_transito: "bg-blue-50 text-blue-700",
   entregado: "bg-green-50 text-green-700",
@@ -10,6 +11,7 @@ const ESTADO_COLORS = {
 };
 
 const ESTADO_LABELS = {
+  pagado: "Pagado",
   pendiente: "Pendiente",
   en_transito: "En tránsito",
   entregado: "Entregado",

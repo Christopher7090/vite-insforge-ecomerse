@@ -6,9 +6,10 @@ import { obtenerUsuario, eliminarPedido } from "../../services/adminService";
 import Button from "../../components/ui/Button";
 import insforge from "../../services/insforgeClient";
 
-const ESTADOS = ["pendiente", "en_transito", "entregado", "cancelado"];
+const ESTADOS = ["pagado","pendiente", "en_transito", "entregado", "cancelado"];
 
 const ESTADO_COLORS = {
+  pagado: "bg-yellow-50 text-green-700",
   pendiente: "bg-amber-50 text-amber-700",
   en_transito: "bg-blue-50 text-blue-700",
   entregado: "bg-green-50 text-green-700",
@@ -16,6 +17,7 @@ const ESTADO_COLORS = {
 };
 
 const ESTADO_LABELS = {
+  pagado: "Pagado",
   pendiente: "Pendiente",
   en_transito: "En tránsito",
   entregado: "Entregado",
