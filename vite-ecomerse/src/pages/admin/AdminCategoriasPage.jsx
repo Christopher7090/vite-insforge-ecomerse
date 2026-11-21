@@ -83,13 +83,21 @@ export default function AdminCategoriasPage() {
                   <td className="px-4 py-3 text-right">
                     {editId === cat.id ? (
                       <>
-                        <button onClick={() => handleGuardar(cat.id)} className="text-sm text-brand-600 hover:underline">Guardar</button>
-                        <button onClick={cancelEdit} className="ml-2 text-sm text-slate-500 hover:underline">Cancelar</button>
+                        <button onClick={() => handleGuardar(cat.id)} className="rounded-md p-1 bg-brand-500 text-sm text-brand-100 hover:bg-brand-400 hover:text-white transition-colors">Guardar</button>
+                        <button onClick={cancelEdit} className="rounded-md p-1 bg-red-500 text-sm text-slate-100 hover:bg-red-400 hover:text-white transition-colors ml-2">Cancelar</button>
                       </>
                     ) : (
                       <>
-                        <button onClick={() => startEdit(cat)} className="text-sm text-brand-600 hover:underline">Editar</button>
-                        <button onClick={() => handleEliminar(cat.id, cat.nombre)} className="ml-2 text-sm text-red-500 hover:underline">Eliminar</button>
+                        <button onClick={() => startEdit(cat)} className="whitespace-nowrap bg-brand-500  text-sm rounded-md p-1 text-brand-100 hover:bg-brand-400 hover:text-white transition-colors items-center gap-1 ">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="inline h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar</button>
+                        <button onClick={() => handleEliminar(cat.id, cat.nombre)} className="whitespace-nowrap ml-2 bg-red-500 text-sm rounded-md p-1 text-red-100 hover:bg-red-400 hover:text-white transition-colors items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="inline h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Eliminar</button>
                       </>
                     )}
                   </td>
