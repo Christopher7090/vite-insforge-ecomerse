@@ -14,7 +14,7 @@ BEGIN
      )
      AND (NEW.payload -> 'data' -> 'object' -> 'metadata' ->> 'order_id') IS NOT NULL THEN
     UPDATE public.orders
-    SET estado = 'pagado'
+    SET estado = 'Pagado'
     WHERE id::text = NEW.payload -> 'data' -> 'object' -> 'metadata' ->> 'order_id'
       AND estado = 'pendiente';
   END IF;

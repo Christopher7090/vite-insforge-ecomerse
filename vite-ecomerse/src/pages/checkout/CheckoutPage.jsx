@@ -137,7 +137,8 @@ export default function CheckoutPage() {
       <h1 className="text-2xl">Finalizar compra</h1>
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
         <form onSubmit={handleSubmit} className="card space-y-5 p-6" noValidate>
-          <FormField
+          <textarea
+            className={`field-input w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${error ? "border-red-500" : ""}`}
             label="Dirección de envío"
             name="direccion"
             value={form.direccion}
